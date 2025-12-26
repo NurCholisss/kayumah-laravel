@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Front;
 use App\Http\Controllers\Controller;
 use App\Models\Cart;
 use App\Models\Product;
+use App\Models\Order;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -19,7 +20,14 @@ class CartController extends Controller
             return $item->product->price * $item->quantity;
         });
 
-        return view('front.cart.index', compact('cartItems', 'total'));
+        // Fetch recent orders for history (last 5)
+        $orders = Order::with(['items.product'])
+            ->where('user_id', Auth::id())
+            ->latest()
+            ->take(5)
+            ->get();
+
+        return view('front.cart.index', compact('cartItems', 'total', 'orders'));
     }
 
     public function store(Request $request)
@@ -64,10 +72,33 @@ class CartController extends Controller
 
         // Cek stok
         if ($cart->product->stock < $request->quantity) {
+            if ($request->wantsJson() || $request->expectsJson()) {
+                return response()->json(['error' => 'Insufficient stock.'], 422);
+            }
+
             return redirect()->back()->with('error', 'Insufficient stock.');
         }
 
         $cart->update(['quantity' => $request->quantity]);
+
+        // If this is an AJAX/JSON request, return updated subtotals so frontend can update UI
+        if ($request->wantsJson() || $request->expectsJson()) {
+            // Recalculate item subtotal and cart totals from authoritative server state
+            $itemSubtotal = $cart->product->price * $cart->quantity;
+
+            $cartItems = Cart::with('product')
+                ->where('user_id', $cart->user_id)
+                ->get();
+
+            $cartSubtotal = $cartItems->sum(function ($item) {
+                return $item->product->price * $item->quantity;
+            });
+
+            return response()->json([
+                'item_subtotal' => $itemSubtotal,
+                'cart_subtotal' => $cartSubtotal,
+            ]);
+        }
 
         return redirect()->route('cart.index')->with('success', 'Cart updated successfully.');
     }

@@ -83,6 +83,7 @@
                 <h3 class="text-lg font-semibold text-gray-800 mb-4">Update Status</h3>
                 <form action="{{ route('admin.orders.updateStatus', $order) }}" method="POST">
                     @csrf
+                    @method('PUT')
                     <div class="space-y-4">
                         <div>
                             <label for="order_status" class="block text-sm font-medium text-gray-700 mb-2">Status Pesanan</label>

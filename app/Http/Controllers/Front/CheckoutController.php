@@ -50,7 +50,9 @@ class CheckoutController extends Controller
             }
         }
 
-        DB::transaction(function () use ($request, $cartItems) {
+        $order = null;
+
+        DB::transaction(function () use ($request, $cartItems, &$order) {
             // Create order
             $order = Order::create([
                 'user_id' => Auth::id(),
@@ -78,6 +80,12 @@ class CheckoutController extends Controller
             Cart::where('user_id', Auth::id())->delete();
         });
 
-        return redirect()->route('home')->with('success', 'Order placed successfully!');
+        // Safety: pastikan order dibuat
+        if (! $order) {
+            return redirect()->route('home')->with('error', 'Failed to create order. Please try again.');
+        }
+
+        // Redirect to payment page to complete payment
+        return redirect()->route('payment.show', $order->id)->with('success', 'Order placed. Please complete payment.');
     }
 }

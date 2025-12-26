@@ -23,8 +23,27 @@ class ProductController extends Controller
             $query->where('name', 'like', '%' . $request->search . '%');
         }
 
-        $products = $query->latest()->paginate(12);
-        $categories = Category::all();
+        // Apply sorting based on request (default: latest)
+        $sort = $request->get('sort', 'latest');
+        switch ($sort) {
+            case 'price_asc':
+                $query->orderBy('price', 'asc');
+                break;
+            case 'price_desc':
+                $query->orderBy('price', 'desc');
+                break;
+            case 'latest':
+            default:
+                $query->latest();
+                break;
+        }
+
+        $products = $query->paginate(12)->withQueryString();
+
+        // Load categories with a products_count that matches the same availability filter (stock > 0)
+        $categories = Category::withCount(['products' => function ($q) {
+            $q->where('stock', '>', 0);
+        }])->get();
 
         return view('front.products.index', compact('products', 'categories'));
     }

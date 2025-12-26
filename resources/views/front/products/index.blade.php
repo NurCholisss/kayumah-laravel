@@ -74,12 +74,20 @@
                     @endif
                 </p>
                 
-                <!-- Sort Options -->
-                <select class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-colors">
-                    <option>Urutkan: Terbaru</option>
-                    <option>Harga: Rendah ke Tinggi</option>
-                    <option>Harga: Tinggi ke Rendah</option>
-                </select>
+                <!-- Sort Options (preserve category/search) -->
+                <form id="sortForm" method="GET" action="{{ route('products.index') }}">
+                    @if(request('category'))
+                        <input type="hidden" name="category" value="{{ request('category') }}">
+                    @endif
+                    @if(request('search'))
+                        <input type="hidden" name="search" value="{{ request('search') }}">
+                    @endif
+                    <select name="sort" onchange="document.getElementById('sortForm').submit()" class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-colors">
+                        <option value="latest" {{ request('sort', 'latest') == 'latest' ? 'selected' : '' }}>Urutkan: Terbaru</option>
+                        <option value="price_asc" {{ request('sort') == 'price_asc' ? 'selected' : '' }}>Harga: Rendah ke Tinggi</option>
+                        <option value="price_desc" {{ request('sort') == 'price_desc' ? 'selected' : '' }}>Harga: Tinggi ke Rendah</option>
+                    </select>
+                </form>
             </div>
 
             <!-- Products Grid -->

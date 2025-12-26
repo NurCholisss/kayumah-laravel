@@ -25,9 +25,24 @@ class OrderController extends Controller
             'order_status' => 'required|in:pending,processed,shipped,completed,cancelled',
         ]);
 
-        $order->update($validated);
+        // Determine payment_status based on selected order_status
+        $statusMap = [
+            'pending' => 'pending',
+            'processed' => 'pending',
+            'shipped' => 'paid',
+            'completed' => 'paid',
+            'cancelled' => 'failed',
+        ];
 
-        return redirect()->route('admin.orders.show', $order)
-            ->with('success', 'Order status updated successfully.');
+        $paymentStatus = $statusMap[$validated['order_status']] ?? 'pending';
+
+        $order->update([
+            'order_status' => $validated['order_status'],
+            'payment_status' => $paymentStatus,
+        ]);
+
+        // Redirect back to orders management list
+        return redirect()->route('admin.orders.index')
+            ->with('success', 'Order status and payment status updated successfully.');
     }
 }

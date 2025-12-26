@@ -4,6 +4,8 @@ use App\Http\Controllers\Front\HomeController;
 use App\Http\Controllers\Front\ProductController;
 use App\Http\Controllers\Front\CartController;
 use App\Http\Controllers\Front\CheckoutController;
+use App\Http\Controllers\Front\PaymentController;
+use App\Http\Controllers\Front\OrderController as FrontOrderController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 
@@ -66,6 +68,15 @@ Route::middleware(['auth'])->group(function () {
     // Checkout Routes
     Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
     Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.store');
+
+    // Payment Routes (after order is created)
+    Route::get('/payment/{order}', [PaymentController::class, 'show'])->name('payment.show');
+    Route::post('/payment/{order}', [PaymentController::class, 'process'])->name('payment.process');
+
+    // Front - Order status (user)
+    Route::get('/orders/{order}', [FrontOrderController::class, 'show'])->name('orders.show');
+    Route::get('/orders/{order}/invoice', [FrontOrderController::class, 'invoice'])->name('orders.invoice');
+    Route::delete('/orders/{order}', [FrontOrderController::class, 'destroy'])->name('orders.destroy');
 });
 
 /*
