@@ -52,7 +52,7 @@
                 </p>
             </div>
             
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
                 @foreach($categories as $category)
                 <a href="{{ route('products.index', ['category' => $category->id]) }}" 
                    class="group bg-amber-50 rounded-xl p-6 text-center hover:bg-amber-100 transition-all duration-300 transform hover:-translate-y-1">
@@ -79,7 +79,7 @@
             
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 @foreach($featuredProducts as $product)
-                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden group hover:shadow-lg transition-all duration-300">
+                <a href="{{ route('products.show', $product) }}" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden group hover:shadow-lg transition-all duration-300">
                     <div class="relative overflow-hidden">
                         <img src="{{ $product->main_image ? asset('storage/' . $product->main_image) : 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1170&q=80' }}" 
                              alt="{{ $product->name }}" 
@@ -118,7 +118,7 @@
                             <span class="text-lg font-bold text-amber-800">Rp {{ number_format($product->price, 0, ',', '.') }}</span>
                             
                             @if($product->stock > 0)
-                                <form action="{{ route('cart.store') }}" method="POST">
+                                <form action="{{ route('cart.store') }}" method="POST" onclick="event.stopPropagation();">
                                     @csrf
                                     <input type="hidden" name="product_id" value="{{ $product->id }}">
                                     <input type="hidden" name="quantity" value="1">
@@ -139,7 +139,7 @@
                             @endif
                         </div>
                     </div>
-                </div>
+                </a>
                 @endforeach
             </div>
             

@@ -34,6 +34,34 @@
                     <div><strong>Jumlah:</strong> Rp {{ $va['amount'] }}</div>
                     <div class="text-xs text-gray-500 mt-2">Silakan lakukan transfer ke nomor Virtual Account di atas. Setelah transfer diterima, status pembayaran akan diperbarui.</div>
                 </div>
+
+                <!-- Upload Bukti Transfer Form -->
+                <div class="mt-4 border-t pt-4">
+                    <h4 class="font-medium mb-3">Unggah Bukti Transfer</h4>
+                    @if($order->payment_proof)
+                        <div class="mb-3 p-3 bg-green-50 border border-green-200 rounded">
+                            <p class="text-sm text-green-700 mb-2">✓ Bukti transfer sudah diunggah</p>
+                            <a href="{{ asset('storage/' . $order->payment_proof) }}" target="_blank" class="text-amber-800 underline text-sm">Lihat bukti transfer</a>
+                        </div>
+                    @endif
+                    <form action="{{ route('payment.uploadProof', $order->id) }}" method="POST" enctype="multipart/form-data">
+                        @csrf
+                        <div class="mb-3">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Pilih file bukti transfer (JPG, PNG, PDF - max 5MB)</label>
+                            <input type="file" name="payment_proof" accept="image/jpeg,image/png,application/pdf" required 
+                                   class="block w-full text-sm text-gray-500
+                                   file:mr-4 file:py-2 file:px-4
+                                   file:rounded-lg file:border-0
+                                   file:text-sm file:font-semibold
+                                   file:bg-amber-50 file:text-amber-800
+                                   hover:file:bg-amber-100" />
+                            @error('payment_proof')
+                                <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
+                            @enderror
+                        </div>
+                        <button type="submit" class="w-full bg-amber-800 text-white px-4 py-2 rounded hover:bg-amber-700 font-medium">Unggah Bukti Transfer</button>
+                    </form>
+                </div>
             </div>
             @endif
         </div>

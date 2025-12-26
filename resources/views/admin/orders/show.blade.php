@@ -1,7 +1,69 @@
-@extends('layouts.admin')
+@extends('layouts.app')
 
-@section('title', 'Detail Pesanan - KayUmah')
-@section('page-title', 'Detail Pesanan #' . $order->order_number)
+@section('title', 'Admin - Order #' . $order->id)
+@section('content')
+<div class="max-w-4xl mx-auto px-4 py-8">
+    <h1 class="text-2xl font-bold mb-4">Order #{{ $order->id }}</h1>
+
+    @if(session('success'))
+        <div class="mb-4 text-green-700">{{ session('success') }}</div>
+    @endif
+
+    <div class="bg-white rounded-lg shadow p-6 mb-6">
+        <div class="mb-4">
+            <strong>User:</strong> {{ $order->user->name ?? '—' }} / {{ $order->user->email ?? '' }}
+        </div>
+        <div class="mb-4">
+            <strong>Total:</strong> Rp {{ number_format($order->total_amount,0,',','.') }}
+        </div>
+        <div class="mb-4">
+            <strong>Payment Status:</strong> {{ $order->payment_status }}
+        </div>
+        <div class="mb-4">
+            <strong>Order Status:</strong> {{ $order->order_status }}
+        </div>
+
+        <div class="mb-4">
+            <strong>Bukti Pembayaran:</strong>
+            @if($order->payment_proof)
+                <div class="mt-2">
+                    <a href="{{ asset('storage/' . $order->payment_proof) }}" target="_blank" class="text-amber-800 hover:underline">Lihat Bukti</a>
+                    <div class="mt-2">
+                        <img src="{{ asset('storage/' . $order->payment_proof) }}" alt="bukti" class="w-64 object-contain border rounded">
+                    </div>
+                </div>
+            @else
+                <div class="text-gray-600">Belum diunggah</div>
+            @endif
+        </div>
+
+        <div class="mt-6">
+            <form action="{{ route('admin.orders.updateStatus', $order) }}" method="POST" class="mb-4">
+                @csrf
+                @method('PUT')
+                <label class="block mb-2 font-medium">Ubah Status Pesanan</label>
+                <select name="order_status" class="border rounded px-3 py-2">
+                    <option value="menunggu" {{ $order->order_status == 'menunggu' ? 'selected' : '' }}>Menunggu</option>
+                    <option value="disetujui" {{ $order->order_status == 'disetujui' ? 'selected' : '' }}>Disetujui</option>
+                    <option value="dikirim" {{ $order->order_status == 'dikirim' ? 'selected' : '' }}>Dikirim</option>
+                    <option value="pesanan diterima" {{ $order->order_status == 'pesanan diterima' ? 'selected' : '' }}>Pesanan Diterima</option>
+                    <option value="ditolak" {{ $order->order_status == 'ditolak' ? 'selected' : '' }}>Ditolak</option>
+                </select>
+                <button type="submit" class="ml-3 bg-amber-800 text-white px-4 py-2 rounded">Simpan</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-lg shadow p-6">
+        <h2 class="font-semibold mb-4">Items</h2>
+        <ul>
+            @foreach($order->items as $item)
+                <li class="mb-2">{{ $item->product->name ?? '—' }} x {{ $item->quantity }} — Rp {{ number_format($item->price,0,',','.') }}</li>
+            @endforeach
+        </ul>
+    </div>
+</div>
+@endsection
 @section('page-description', 'Informasi lengkap pesanan')
 
 @section('content')
@@ -102,6 +164,35 @@
                         </button>
                     </div>
                 </form>
+            </div>
+            
+            <!-- Payment Proof -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">Bukti Pembayaran</h3>
+                @if($order->payment_proof)
+                    <div class="mb-4">
+                        <a href="{{ asset('storage/' . $order->payment_proof) }}" target="_blank">
+                            <img src="{{ asset('storage/' . $order->payment_proof) }}" alt="Bukti Pembayaran" class="w-full h-auto rounded">
+                        </a>
+                    </div>
+                    <div class="flex space-x-2">
+                        @if($order->payment_status !== 'paid')
+                        <form action="{{ route('admin.orders.approvePayment', $order) }}" method="POST">
+                            @csrf
+                            <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">Setujui Pembayaran</button>
+                        </form>
+                        @endif
+
+                        @if($order->order_status !== 'shipped')
+                        <form action="{{ route('admin.orders.markShipped', $order) }}" method="POST">
+                            @csrf
+                            <button type="submit" class="px-4 py-2 bg-amber-600 text-white rounded hover:bg-amber-700">Tandai Dikirim</button>
+                        </form>
+                        @endif
+                    </div>
+                @else
+                    <p class="text-sm text-gray-600">Belum ada bukti pembayaran yang diunggah oleh pelanggan.</p>
+                @endif
             </div>
         </div>
     </div>

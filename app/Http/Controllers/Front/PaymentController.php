@@ -35,7 +35,7 @@ class PaymentController extends Controller
         if ($method === 'cod') {
             // Cash on Delivery: payment masih pending, ubah order_status
             $order->update([
-                'order_status' => 'processed',
+                'order_status' => 'disetujui',
                 'payment_status' => 'pending',
             ]);
 
@@ -44,10 +44,10 @@ class PaymentController extends Controller
         }
 
         // For 'online' we simulate a Virtual Account transfer flow.
-        // Mark payment as pending (awaiting transfer) and keep order processed.
+        // Mark payment as pending (awaiting transfer) and keep order disetujui.
         $order->update([
             'payment_status' => 'pending',
-            'order_status' => 'processed',
+            'order_status' => 'disetujui',
         ]);
 
         // Generate a fake Virtual Account (VA) info for this simulation.
@@ -63,5 +63,28 @@ class PaymentController extends Controller
         return redirect()->route('orders.show', $order->id)
             ->with('success', 'Payment initiated. Silakan lakukan transfer ke Virtual Account di bawah.')
             ->with('va_info', $vaInfo);
+    }
+
+    // Upload bukti transfer (image/pdf)
+    public function uploadProof(Request $request, Order $order)
+    {
+        if ($order->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        $request->validate([
+            'payment_proof' => 'required|file|mimes:jpg,jpeg,png,pdf|max:5120',
+        ]);
+
+        $file = $request->file('payment_proof');
+        $path = $file->store('payments', 'public');
+
+        $order->update([
+            'payment_proof' => $path,
+            'payment_status' => 'pending_verification',
+            'order_status' => 'disetujui',
+        ]);
+
+        return redirect()->route('orders.show', $order->id)->with('success', 'Bukti transfer berhasil diunggah. Menunggu verifikasi admin.');
     }
 }

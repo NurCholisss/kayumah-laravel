@@ -15,6 +15,7 @@ return new class extends Migration
             $table->enum('payment_status', ['pending', 'paid', 'failed'])->default('pending');
             $table->enum('order_status', ['pending', 'processed', 'shipped', 'completed', 'cancelled'])->default('pending');
             $table->text('shipping_address');
+            $table->string('payment_proof')->nullable();
             $table->timestamps();
         });
     }

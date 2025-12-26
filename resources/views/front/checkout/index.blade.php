@@ -12,6 +12,11 @@
     <form action="{{ route('checkout.store') }}" method="POST">
         @csrf
         
+        <!-- Hidden inputs untuk selected items -->
+        @foreach($selectedIds as $id)
+        <input type="hidden" name="selected_items[]" value="{{ $id }}">
+        @endforeach
+        
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <!-- Checkout Form -->
             <div class="lg:col-span-2">
@@ -50,30 +55,6 @@
                         </div>
                     </div>
                     
-                    <!-- Shipping Method -->
-                    <div class="mb-6">
-                        <h3 class="text-lg font-medium text-gray-800 mb-4">Metode Pengiriman</h3>
-                        <div class="space-y-3">
-                            <label class="flex items-center p-4 border border-gray-300 rounded-lg cursor-pointer hover:border-amber-500 transition-colors">
-                                <input type="radio" name="shipping_method" value="regular" checked class="text-amber-600 focus:ring-amber-500">
-                                <div class="ml-3">
-                                    <span class="font-medium text-gray-800">Reguler</span>
-                                    <p class="text-sm text-gray-600">Estimasi 3-5 hari kerja - Gratis</p>
-                                </div>
-                            </label>
-                            
-                            <label class="flex items-center p-4 border border-gray-300 rounded-lg cursor-pointer hover:border-amber-500 transition-colors">
-                                <input type="radio" name="shipping_method" value="express" class="text-amber-600 focus:ring-amber-500">
-                                <div class="ml-3">
-                                    <span class="font-medium text-gray-800">Express</span>
-                                    <p class="text-sm text-gray-600">Estimasi 1-2 hari kerja - Rp 50.000</p>
-                                </div>
-                            </label>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
             <!-- Order Summary -->
             <div class="lg:col-span-1">
                 <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 sticky top-24">

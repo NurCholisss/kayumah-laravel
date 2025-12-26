@@ -27,8 +27,14 @@
                 <!-- Cart Items List -->
                 <div class="divide-y divide-gray-200">
                     @foreach($cartItems as $item)
-                    <div class="p-6 cart-item" data-price="{{ $item->product->price }}">
+                    <div class="p-6 cart-item" data-price="{{ $item->product->price }}" data-cart-id="{{ $item->id }}">
                         <div class="flex items-start space-x-4">
+                            <!-- Checkbox untuk select item -->
+                            <div class="flex-shrink-0 mt-1">
+                                <input type="checkbox" class="item-checkbox w-5 h-5 text-amber-600 rounded focus:ring-amber-500" 
+                                       value="{{ $item->id }}" checked>
+                            </div>
+
                             <!-- Product Image -->
                             <div class="flex-shrink-0 w-20 h-20 bg-gray-200 rounded-lg overflow-hidden">
                                 <img src="{{ $item->product->main_image ? asset('storage/' . $item->product->main_image) : 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1170&q=80' }}" 
@@ -113,10 +119,12 @@
                 </div>
                 
                 <!-- Checkout Button -->
-                <a href="{{ route('checkout.index') }}" 
-                   class="w-full bg-amber-800 text-white py-3 px-6 rounded-lg hover:bg-amber-700 transition-colors duration-200 font-semibold text-center block">
-                    Lanjut ke Checkout
-                </a>
+                <form id="checkout-form" action="{{ route('checkout.index') }}" method="GET" class="mb-3">
+                    <button type="submit" id="checkout-btn"
+                            class="w-full bg-amber-800 text-white py-3 px-6 rounded-lg hover:bg-amber-700 transition-colors duration-200 font-semibold text-center">
+                        Lanjut ke Checkout (Pilihan)
+                    </button>
+                </form>
                 
                 <!-- Continue Shopping -->
                 <a href="{{ route('products.index') }}" 
@@ -142,58 +150,6 @@
         @endif
     @endif
 </div>
-    
-    <!-- Order history (recent) -->
-    @if(isset($orders) && $orders->count() > 0)
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mt-6">
-            <h2 class="text-lg font-semibold mb-4">Riwayat Pesanan Terbaru</h2>
-
-            @foreach($orders as $order)
-            <div class="border-t pt-4 mt-4">
-                <div class="flex items-center justify-between mb-3">
-                    <div>
-                        <div class="text-sm font-medium">No. Pesanan: {{ $order->order_number }}</div>
-                        <div class="text-xs text-gray-500">{{ $order->created_at->format('d M Y H:i') }}</div>
-                    </div>
-                    <div class="text-sm">
-                        <span class="px-2 py-1 rounded text-white text-xs {{ $order->payment_status == 'paid' ? 'bg-green-600' : 'bg-yellow-500' }}">
-                            {{ ucfirst($order->payment_status) }}
-                        </span>
-                    </div>
-                </div>
-
-                <div class="flex justify-end mb-3">
-                    @if(method_exists($order, 'canBeCancelled') && $order->canBeCancelled())
-                    <form action="{{ route('orders.destroy', $order->id) }}" method="POST" onsubmit="return confirm('Yakin ingin membatalkan pesanan ini? Semua item akan dikembalikan ke stok.');">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" class="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 text-sm">Batalkan Pesanan</button>
-                    </form>
-                    @endif
-                </div>
-
-                <div class="space-y-3">
-                    @foreach($order->items as $item)
-                    <div class="flex items-center space-x-4">
-                        <div class="w-20 h-20 bg-gray-100 rounded overflow-hidden flex-shrink-0">
-                            <img src="{{ $item->product && $item->product->main_image ? asset('storage/' . $item->product->main_image) : 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1170&q=80' }}" alt="{{ $item->product->name ?? 'Product' }}" class="w-full h-full object-cover">
-                        </div>
-                        <div class="flex-1 min-w-0">
-                            <div class="text-sm font-medium text-gray-800">{{ $item->product->name ?? 'Product deleted' }}</div>
-                            <div class="text-xs text-gray-500">Jumlah: {{ $item->quantity }} &middot; Rp {{ number_format($item->price, 0, ',', '.') }}</div>
-                        </div>
-                        <div class="text-right">
-                            <div class="text-sm font-semibold">Rp {{ number_format($item->subtotal, 0, ',', '.') }}</div>
-                        </div>
-                    </div>
-                    @endforeach
-                </div>
-            </div>
-            @endforeach
-        </div>
-    </div>
-    @endif
 @endsection
 
 @section('scripts')
@@ -211,6 +167,9 @@ document.addEventListener('DOMContentLoaded', function () {
         const items = document.querySelectorAll('.cart-item');
         let subtotal = 0;
         items.forEach(function(item) {
+            const checkbox = item.querySelector('.item-checkbox');
+            if (!checkbox.checked) return; // Skip unchecked items
+            
             const price = parseNumber(item.dataset.price);
             const qtyInput = item.querySelector('.cart-quantity');
             const qty = parseNumber(qtyInput ? qtyInput.value : 0);
@@ -227,6 +186,13 @@ document.addEventListener('DOMContentLoaded', function () {
         if (subtotalEl) subtotalEl.textContent = fmt.format(subtotal);
         if (totalEl) totalEl.textContent = fmt.format(subtotal);
     }
+
+    // Listen to checkbox changes
+    document.querySelectorAll('.item-checkbox').forEach(function(checkbox) {
+        checkbox.addEventListener('change', function() {
+            recalcTotals();
+        });
+    });
 
     // Attach listeners to quantity inputs for immediate UI update and server persistence
     document.querySelectorAll('.cart-quantity').forEach(function(input) {
@@ -309,6 +275,27 @@ document.addEventListener('DOMContentLoaded', function () {
             console.error('updateCartItem error', err);
             alert('Terjadi kesalahan saat memperbarui keranjang. Silakan coba lagi.');
         }
+    }
+
+    // Handle checkout form submission - add selected cart IDs as query params
+    const checkoutForm = document.getElementById('checkout-form');
+    const checkoutBtn = document.getElementById('checkout-btn');
+    if (checkoutForm && checkoutBtn) {
+        checkoutBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            const checkedBoxes = document.querySelectorAll('.item-checkbox:checked');
+            if (checkedBoxes.length === 0) {
+                alert('Pilih minimal satu item untuk checkout.');
+                return;
+            }
+
+            const selectedIds = Array.from(checkedBoxes).map(cb => cb.value);
+            const params = new URLSearchParams();
+            selectedIds.forEach(id => params.append('selected[]', id));
+
+            window.location.href = checkoutForm.getAttribute('action') + '?' + params.toString();
+        });
     }
 
     // Initial calculation (on page load)

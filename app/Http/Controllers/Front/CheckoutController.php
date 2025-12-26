@@ -13,36 +13,49 @@ class CheckoutController extends Controller
 {
     public function index()
     {
-        $cartItems = Cart::with('product')
-            ->where('user_id', Auth::id())
-            ->get();
+        $selectedIds = request()->query('selected', []);
+        
+        $query = Cart::with('product')
+            ->where('user_id', Auth::id());
+
+        // Filter by selected IDs jika ada
+        if (!empty($selectedIds)) {
+            $query->whereIn('id', $selectedIds);
+        }
+
+        $cartItems = $query->get();
 
         if ($cartItems->isEmpty()) {
-            return redirect()->route('cart.index')->with('error', 'Your cart is empty.');
+            return redirect()->route('cart.index')->with('error', 'Pilih minimal satu item untuk checkout.');
         }
 
         $total = $cartItems->sum(function ($item) {
             return $item->product->price * $item->quantity;
         });
 
-        return view('front.checkout.index', compact('cartItems', 'total'));
+        return view('front.checkout.index', compact('cartItems', 'total', 'selectedIds'));
     }
 
     public function store(Request $request)
     {
         $request->validate([
             'shipping_address' => 'required|string|min:10',
+            'selected_items' => 'required|array|min:1',
+            'selected_items.*' => 'required|exists:carts,id',
         ]);
+
+        $selectedIds = $request->input('selected_items');
 
         $cartItems = Cart::with('product')
             ->where('user_id', Auth::id())
+            ->whereIn('id', $selectedIds)
             ->get();
 
         if ($cartItems->isEmpty()) {
-            return redirect()->route('cart.index')->with('error', 'Your cart is empty.');
+            return redirect()->route('cart.index')->with('error', 'Pilih minimal satu item untuk checkout.');
         }
 
-        // Cek stok untuk semua item
+        // Cek stok untuk semua item terpilih
         foreach ($cartItems as $item) {
             if ($item->product->stock < $item->quantity) {
                 return redirect()->route('cart.index')
@@ -52,7 +65,7 @@ class CheckoutController extends Controller
 
         $order = null;
 
-        DB::transaction(function () use ($request, $cartItems, &$order) {
+        DB::transaction(function () use ($request, $cartItems, $selectedIds, &$order) {
             // Create order
             $order = Order::create([
                 'user_id' => Auth::id(),
@@ -76,8 +89,10 @@ class CheckoutController extends Controller
                 $item->product->decrement('stock', $item->quantity);
             }
 
-            // Clear cart
-            Cart::where('user_id', Auth::id())->delete();
+            // Delete only selected items from cart
+            Cart::where('user_id', Auth::id())
+                ->whereIn('id', $selectedIds)
+                ->delete();
         });
 
         // Safety: pastikan order dibuat

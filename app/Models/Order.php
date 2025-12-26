@@ -10,7 +10,7 @@ class Order extends Model
 
     protected $fillable = [
         'user_id', 'order_number', 'total_amount', 
-        'payment_status', 'order_status', 'shipping_address'
+        'payment_status', 'order_status', 'shipping_address', 'payment_proof'
     ];
 
     protected $casts = [
@@ -42,6 +42,6 @@ class Order extends Model
     // Cek apakah order bisa dibatalkan
     public function canBeCancelled(): bool
     {
-        return in_array($this->order_status, ['pending', 'processed']);
+        return in_array($this->order_status, ['menunggu', 'disetujui']);
     }
 }

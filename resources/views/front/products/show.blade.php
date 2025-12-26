@@ -85,10 +85,7 @@
 
             <!-- Add to Cart -->
             @if($product->stock > 0)
-            <form action="{{ route('cart.store') }}" method="POST" class="mb-8">
-                @csrf
-                <input type="hidden" name="product_id" value="{{ $product->id }}">
-                
+            <div class="mb-8">
                 <!-- Quantity Selector -->
                 <div class="flex items-center space-x-4 mb-6">
                     <span class="text-gray-700 font-medium">Jumlah:</span>
@@ -103,16 +100,27 @@
                 
                 <!-- Action Buttons -->
                 <div class="flex flex-col sm:flex-row gap-4">
-                    <button type="submit" 
-                            class="flex-1 bg-amber-800 text-white px-8 py-4 rounded-lg hover:bg-amber-700 transition-colors duration-200 font-semibold text-lg">
-                        + Tambah ke Keranjang
-                    </button>
-                    <button type="button" 
-                            class="flex-1 border border-amber-800 text-amber-800 px-8 py-4 rounded-lg hover:bg-amber-50 transition-colors duration-200 font-semibold text-lg">
-                        Beli Sekarang
-                    </button>
+                    <form action="{{ route('cart.store') }}" method="POST" class="flex-1">
+                        @csrf
+                        <input type="hidden" name="product_id" value="{{ $product->id }}">
+                        <input type="hidden" name="quantity" id="quantity-input" value="1">
+                        <button type="submit" 
+                                class="w-full h-full bg-amber-800 text-white px-8 py-4 rounded-lg hover:bg-amber-700 transition-colors duration-200 font-semibold text-lg">
+                            + Tambah ke Keranjang
+                        </button>
+                    </form>
+                    <form method="POST" action="{{ route('cart.store') }}" class="flex-1">
+                        @csrf
+                        <input type="hidden" name="product_id" value="{{ $product->id }}">
+                        <input type="hidden" name="quantity" value="1">
+                        <input type="hidden" name="redirect_to_checkout" value="1">
+                        <button type="submit" 
+                                class="w-full h-full border border-amber-800 text-amber-800 px-8 py-4 rounded-lg hover:bg-amber-50 transition-colors duration-200 font-semibold text-lg">
+                            Beli Sekarang
+                        </button>
+                    </form>
                 </div>
-            </form>
+            </div>
             @else
             <div class="bg-gray-100 rounded-lg p-6 text-center mb-8">
                 <p class="text-gray-600 mb-4">Produk sedang tidak tersedia</p>
@@ -178,19 +186,23 @@
     
     function increaseQuantity() {
         const quantityInput = document.getElementById('quantity');
+        const quantityInputForm = document.getElementById('quantity-input');
         const max = parseInt(quantityInput.max);
         const current = parseInt(quantityInput.value);
         if (current < max) {
             quantityInput.value = current + 1;
+            quantityInputForm.value = current + 1;
         }
     }
     
     function decreaseQuantity() {
         const quantityInput = document.getElementById('quantity');
+        const quantityInputForm = document.getElementById('quantity-input');
         const min = parseInt(quantityInput.min);
         const current = parseInt(quantityInput.value);
         if (current > min) {
             quantityInput.value = current - 1;
+            quantityInputForm.value = current - 1;
         }
     }
 </script>

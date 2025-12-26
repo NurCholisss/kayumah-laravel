@@ -20,14 +20,7 @@ class CartController extends Controller
             return $item->product->price * $item->quantity;
         });
 
-        // Fetch recent orders for history (last 5)
-        $orders = Order::with(['items.product'])
-            ->where('user_id', Auth::id())
-            ->latest()
-            ->take(5)
-            ->get();
-
-        return view('front.cart.index', compact('cartItems', 'total', 'orders'));
+        return view('front.cart.index', compact('cartItems', 'total'));
     }
 
     public function store(Request $request)
@@ -61,7 +54,12 @@ class CartController extends Controller
             ]);
         }
 
-        return redirect()->route('cart.index')->with('success', 'Product added to cart.');
+        // Jika ada flag redirect_to_checkout, langsung ke checkout
+        if ($request->input('redirect_to_checkout')) {
+            return redirect()->route('checkout.index')->with('success', 'Produk berhasil ditambahkan ke keranjang. Lanjutkan ke checkout.');
+        }
+
+        return redirect()->back()->with('success', 'Produk berhasil ditambahkan ke keranjang.');
     }
 
     public function update(Request $request, Cart $cart)

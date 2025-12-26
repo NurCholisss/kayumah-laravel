@@ -72,8 +72,10 @@ Route::middleware(['auth'])->group(function () {
     // Payment Routes (after order is created)
     Route::get('/payment/{order}', [PaymentController::class, 'show'])->name('payment.show');
     Route::post('/payment/{order}', [PaymentController::class, 'process'])->name('payment.process');
+    Route::post('/payment/{order}/upload-proof', [PaymentController::class, 'uploadProof'])->name('payment.uploadProof');
 
     // Front - Order status (user)
+    Route::get('/orders', [FrontOrderController::class, 'index'])->name('orders.index');
     Route::get('/orders/{order}', [FrontOrderController::class, 'show'])->name('orders.show');
     Route::get('/orders/{order}/invoice', [FrontOrderController::class, 'invoice'])->name('orders.invoice');
     Route::delete('/orders/{order}', [FrontOrderController::class, 'destroy'])->name('orders.destroy');
@@ -100,6 +102,8 @@ Route::middleware(['auth', 'is_admin'])->prefix('admin')->name('admin.')->group(
     Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
     Route::get('/orders/{order}', [OrderController::class, 'show'])->name('orders.show');
     Route::put('/orders/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.updateStatus');
+    Route::post('/orders/{order}/approve-payment', [OrderController::class, 'approvePayment'])->name('orders.approvePayment');
+    Route::post('/orders/{order}/mark-shipped', [OrderController::class, 'markShipped'])->name('orders.markShipped');
     
     // Users Management  
     Route::get('/users', [UserController::class, 'index'])->name('users.index');

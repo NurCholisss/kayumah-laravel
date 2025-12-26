@@ -21,10 +21,12 @@
                    class="text-gray-700 hover:text-amber-800 transition-colors duration-200 {{ Request::routeIs('products.*') ? 'text-amber-800 font-medium' : '' }}">
                     Produk
                 </a>
-                <a href="{{ route('cart.index') }}" 
-                   class="text-gray-700 hover:text-amber-800 transition-colors duration-200 {{ Request::routeIs('cart.*') ? 'text-amber-800 font-medium' : '' }}">
-                    Keranjang
-                </a>
+                @auth
+                    <a href="{{ route('orders.index') }}" 
+                       class="text-gray-700 hover:text-amber-800 transition-colors duration-200 {{ Request::routeIs('orders.*') ? 'text-amber-800 font-medium' : '' }}">
+                        Riwayat Pembelian
+                    </a>
+                @endauth
             </div>
 
             <!-- Right Section -->
@@ -107,10 +109,16 @@
                    class="text-gray-700 hover:text-amber-800 transition-colors duration-200 {{ Request::routeIs('products.*') ? 'text-amber-800 font-medium' : '' }}">
                     Produk
                 </a>
-                <a href="{{ route('cart.index') }}" 
-                   class="text-gray-700 hover:text-amber-800 transition-colors duration-200 {{ Request::routeIs('cart.*') ? 'text-amber-800 font-medium' : '' }}">
-                    Keranjang
-                </a>
+                @auth
+                    <a href="{{ route('cart.index') }}" 
+                       class="text-gray-700 hover:text-amber-800 transition-colors duration-200 {{ Request::routeIs('cart.*') ? 'text-amber-800 font-medium' : '' }}">
+                        Keranjang
+                    </a>
+                    <a href="{{ route('orders.index') }}" 
+                       class="text-gray-700 hover:text-amber-800 transition-colors duration-200 {{ Request::routeIs('orders.*') ? 'text-amber-800 font-medium' : '' }}">
+                        Riwayat Pembelian
+                    </a>
+                @endauth
                 
                 @guest
                     <div class="pt-4 border-t border-gray-100 space-y-2">

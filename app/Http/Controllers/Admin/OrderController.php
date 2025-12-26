@@ -4,45 +4,56 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class OrderController extends Controller
 {
+    // List semua order
     public function index()
     {
-        $orders = Order::with('user')->latest()->get();
+        $orders = Order::with('user', 'items')->orderBy('created_at', 'desc')->paginate(20);
         return view('admin.orders.index', compact('orders'));
     }
 
+    // Tampilkan detail order termasuk bukti pembayaran
     public function show(Order $order)
     {
-        $order->load(['user', 'items.product']);
+        $order->load('user', 'items', 'items.product');
         return view('admin.orders.show', compact('order'));
     }
 
+    // Update status order (generic)
     public function updateStatus(Request $request, Order $order)
     {
-        $validated = $request->validate([
-            'order_status' => 'required|in:pending,processed,shipped,completed,cancelled',
+        $request->validate([
+            'order_status' => 'required|string',
+            'payment_status' => 'nullable|string',
         ]);
 
-        // Determine payment_status based on selected order_status
-        $statusMap = [
-            'pending' => 'pending',
-            'processed' => 'pending',
-            'shipped' => 'paid',
-            'completed' => 'paid',
-            'cancelled' => 'failed',
-        ];
+        $data = [];
+        if ($request->has('order_status')) {
+            $data['order_status'] = $request->order_status;
+        }
+        if ($request->filled('payment_status')) {
+            $data['payment_status'] = $request->payment_status;
+        }
 
-        $paymentStatus = $statusMap[$validated['order_status']] ?? 'pending';
+        $order->update($data);
 
-        $order->update([
-            'order_status' => $validated['order_status'],
-            'payment_status' => $paymentStatus,
-        ]);
+        return redirect()->route('admin.orders.show', $order->id)->with('success', 'Order updated.');
+    }
 
-        // Redirect back to orders management list
-        return redirect()->route('admin.orders.index')
-            ->with('success', 'Order status and payment status updated successfully.');
+    // Approve payment: set payment_status => paid
+    public function approvePayment(Order $order)
+    {
+        $order->update(['payment_status' => 'paid']);
+        return redirect()->route('admin.orders.show', $order->id)->with('success', 'Payment approved.');
+    }
+
+    // Mark as shipped
+    public function markShipped(Order $order)
+    {
+        $order->update(['order_status' => 'dikirim']);
+        return redirect()->route('admin.orders.show', $order->id)->with('success', 'Pesanan ditandai sebagai dikirim.');
     }
 }

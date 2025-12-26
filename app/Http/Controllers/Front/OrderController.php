@@ -9,6 +9,13 @@ use Illuminate\Support\Facades\DB;
 
 class OrderController extends Controller
 {
+    // Tampilkan list semua orders user
+    public function index()
+    {
+        $orders = Auth::user()->orders()->orderBy('created_at', 'desc')->get();
+        return view('front.orders.index', compact('orders'));
+    }
+
     // Tampilkan status / detail order untuk user
     public function show(Order $order)
     {
